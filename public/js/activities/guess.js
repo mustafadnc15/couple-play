@@ -140,7 +140,10 @@ export default {
           el('p', { class: 'lead', text: api.t('guess.setSecret', { kind: kind(), n: state.length, unit: api.t(`guess.unit${state.mode}`) }) }),
           el('div', { class: 'secret-row' }, input, el('button', { type: 'button', class: 'btn btn-primary', text: api.t('guess.confirm'), onclick: submit })),
         );
-        setTimeout(() => input.focus(), 50);
+        setTimeout(() => {
+          const active = document.activeElement;
+          if (!active || active === document.body) input.focus();
+        }, 50);
       } else {
         nodes.push(el('p', { class: 'lead', text: api.t('guess.secretSet', { kind: kind(), secret: state.me.secret }) }));
       }

@@ -527,6 +527,96 @@ body[data-view='home'] .reactions { display: none; }
 .library-meta strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge { font-size: 0.75rem; font-weight: 800; color: var(--muted); background: #f3eef8; border-radius: 999px; padding: 0.15rem 0.5rem; white-space: nowrap; }
 
+/* ---------- chat ---------- */
+
+.reactions { align-items: center; }
+.reactions-sep { width: 1px; height: 24px; background: var(--line); margin: 0 0.15rem; }
+.chat-toggle {
+  position: relative;
+  font-size: 1.25rem;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+}
+.chat-toggle:hover, .chat-toggle.active { background: var(--pink-soft); }
+.chat-badge {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--pink);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+.chat-panel {
+  position: fixed;
+  right: 0.8rem;
+  bottom: 4.2rem;
+  width: min(360px, calc(100vw - 1.6rem));
+  height: min(520px, calc(100dvh - var(--header-h) - 6rem));
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(60, 20, 80, 0.25);
+  display: flex;
+  flex-direction: column;
+  z-index: 22;
+  overflow: hidden;
+}
+.chat-head { display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; border-bottom: 1px solid var(--line); background: linear-gradient(135deg, #fff0f5, #f1ecff); }
+.chat-head h3 { font-size: 1.05rem; }
+.chat-close { border: 0; background: none; font-size: 1rem; cursor: pointer; width: 32px; height: 32px; border-radius: 50%; color: var(--muted); }
+.chat-close:hover { background: #fff; }
+.chat-list { flex: 1; overflow-y: auto; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.chat-empty { margin: auto; color: var(--muted); text-align: center; font-weight: 700; padding: 1rem; }
+.chat-msg { display: flex; flex-direction: column; align-items: flex-start; max-width: 85%; }
+.chat-msg.mine { align-self: flex-end; align-items: flex-end; }
+.chat-msg:not(.grouped) { margin-top: 0.35rem; }
+.chat-name { font-size: 0.75rem; font-weight: 800; color: color-mix(in srgb, var(--c) 80%, black); margin: 0 0 0.15rem 0.6rem; }
+.chat-bubble {
+  background: color-mix(in srgb, var(--c) 14%, white);
+  border-radius: 16px 16px 16px 4px;
+  padding: 0.45rem 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.2rem 0.5rem;
+}
+.chat-msg.mine .chat-bubble { background: linear-gradient(135deg, var(--pink), #ff7a59); color: #fff; border-radius: 16px 16px 4px 16px; }
+.chat-text { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.35; }
+.chat-bubble time { font-size: 0.68rem; opacity: 0.65; margin-left: auto; }
+.chat-typing { padding: 0 1rem 0.3rem; font-size: 0.8rem; font-weight: 700; color: var(--muted); animation: pulse 1.6s ease-in-out infinite; }
+.chat-form { display: flex; gap: 0.4rem; padding: 0.6rem; border-top: 1px solid var(--line); }
+.chat-input { flex: 1; padding: 0.55rem 0.8rem; border-radius: 999px; }
+.chat-send { padding: 0.5rem 0.9rem; }
+.chat-preview {
+  position: fixed;
+  right: 0.8rem;
+  bottom: 4.2rem;
+  max-width: min(320px, calc(100vw - 1.6rem));
+  font: inherit;
+  text-align: left;
+  background: #fff;
+  border: 0;
+  border-radius: 16px 16px 4px 16px;
+  padding: 0.6rem 0.85rem;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  z-index: 21;
+  animation: pop-in 0.25s ease;
+}
+@keyframes pop-in { from { transform: translateY(8px); opacity: 0; } }
+body[data-view='home'] .chat-panel, body[data-view='home'] .chat-preview { display: none; }
+
 /* ---------- responsive ---------- */
 
 @media (max-width: 860px) {
@@ -550,5 +640,7 @@ body[data-view='home'] .reactions { display: none; }
   .key { height: 44px; }
   .invite-row { flex-wrap: wrap; }
   .reactions { right: 50%; transform: translateX(50%); }
+  .chat-panel { right: 0.5rem; left: 0.5rem; width: auto; bottom: 4rem; height: min(70dvh, calc(100dvh - var(--header-h) - 5rem)); }
+  .chat-preview { right: 50%; translate: 50% 0; bottom: 4rem; }
   #view-activity { padding-bottom: 4rem; }
 }

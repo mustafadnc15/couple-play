@@ -65,7 +65,9 @@ export default {
       }
       const hadFocus = document.activeElement === input;
       view.replaceChildren(...nodes);
-      if (hadFocus || (!state.done && state.hasPartner && !state.myPending)) input.focus({ preventScroll: true });
+      const active = document.activeElement;
+      const focusFree = !active || active === document.body || view.contains(active);
+      if (hadFocus || (focusFree && !state.done && state.hasPartner && !state.myPending)) input.focus({ preventScroll: true });
     }
 
     return {

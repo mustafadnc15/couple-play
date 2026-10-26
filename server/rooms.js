@@ -8,6 +8,9 @@ const COLORS = ['#ff4f81', '#6c63ff'];
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ROOM_TTL_MS = 6 * 60 * 60 * 1000; // drop rooms nobody has used for 6 hours
 const REACTIONS = ['❤️', '😘', '😂', '🥰', '👏', '🔥'];
+const CHAT_HISTORY = 200;
+const CHAT_MAX_LENGTH = 500;
+const CHAT_RATE = { count: 8, windowMs: 5000 }; // at most 8 messages per 5 seconds per connection
 
 function randomCode(len = 5) {
   const bytes = crypto.randomBytes(len);
@@ -37,7 +40,7 @@ class RoomManager {
   createRoom() {
     let code;
     do code = randomCode(); while (this.rooms.has(code));
-    const room = { code, players: new Map(), activity: null, emptySince: Date.now() };
+    const room = { code, players: new Map(), activity: null, emptySince: Date.now(), chat: [], chatSeq: 0 };
     this.rooms.set(code, room);
     return room;
   }
@@ -175,6 +178,7 @@ class RoomManager {
       const res = this.join(socket, room, payload.name, clientId);
       if (res.error) return reply({ ok: false, error: res.error });
       reply({ ok: true, me: res.player.pid, room: this.roomView(room) });
+      socket.emit('chat:history', room.chat);
       this.broadcastRoom(room);
       // Activities with per-player views depend on who is in the room, so refresh everyone.
       const mod = room.activity && activities.get(room.activity.id);
@@ -249,6 +253,29 @@ class RoomManager {
       this.io.to(room.code).emit('react', { pid: player.pid, emoji: payload.emoji });
     });
 
+    socket.on('chat:send', (payload, fn) => {
+      const reply = ack(fn);
+      const { room, player } = this.lookup(socket);
+      if (!room) return reply({ ok: false, error: 'notInRoom' });
+      const text = String((payload && payload.text) || '').replace(/\s+/g, ' ').trim().slice(0, CHAT_MAX_LENGTH);
+      if (!text) return reply({ ok: false, error: 'empty' });
+      const now = Date.now();
+      socket.chatTimes = (socket.chatTimes || []).filter((t) => now - t < CHAT_RATE.windowMs);
+      if (socket.chatTimes.length >= CHAT_RATE.count) return reply({ ok: false, error: 'rate' });
+      socket.chatTimes.push(now);
+      const msg = { id: ++room.chatSeq, pid: player.pid, name: player.name, text, at: now };
+      room.chat.push(msg);
+      if (room.chat.length > CHAT_HISTORY) room.chat.splice(0, room.chat.length - CHAT_HISTORY);
+      this.io.to(room.code).emit('chat:msg', msg);
+      reply({ ok: true, id: msg.id });
+    });
+
+    socket.on('chat:typing', (payload) => {
+      const { room, player } = this.lookup(socket);
+      if (!room) return;
+      socket.to(room.code).emit('chat:typing', { pid: player.pid, typing: Boolean(payload && payload.typing) });
+    });
+
     socket.on('disconnect', () => {
       const { room, player } = this.lookup(socket);
       if (room) this.markOffline(room, player);
@@ -256,4 +283,4 @@ class RoomManager {
   }
 }
 
-module.exports = { RoomManager, MAX_PLAYERS, REACTIONS };
+module.exports = { RoomManager, MAX_PLAYERS, REACTIONS, CHAT_HISTORY };

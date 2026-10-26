@@ -1,6 +1,7 @@
 import { t, getLang, setLang, onLangChange, applyI18n } from './i18n.js';
 import { el, throttle } from './lib/ui.js';
 import { activities, getActivity } from './activities/index.js';
+import { createChat } from './chat.js';
 
 /* global io */
 const socket = io();
@@ -161,6 +162,7 @@ function onRoom(room) {
   const prevActivity = app.room?.activity;
   app.room = room;
   renderPlayers();
+  chat.rerender();
   if (!room.activity) {
     unmountActivity();
     renderActivityGrid();
@@ -174,6 +176,7 @@ function onRoom(room) {
 socket.on('room:update', onRoom);
 socket.on('room:kicked', () => {
   app.room = null;
+  chat.reset();
   unmountActivity();
   homeError('err.kicked');
   show('home');
@@ -199,6 +202,7 @@ if (navigator.share) {
 $('leave-btn').addEventListener('click', () => {
   socket.emit('room:leave');
   app.room = null;
+  chat.reset();
   unmountActivity();
   history.replaceState(null, '', '/');
   show('home');
@@ -291,10 +295,16 @@ socket.on('cursor', ({ pid, x, y }) => {
   app.current?.instance?.onCursor?.(pid, x, y);
 });
 
+/* ---------- chat ---------- */
+
+const chat = createChat({ socket, t, getLang, me: () => app.me, player });
+document.body.append(chat.nodes.panel, chat.nodes.preview);
+document.addEventListener('cp:toast', (e) => toast(e.detail));
+
 /* ---------- reactions ---------- */
 
 const REACTIONS = ['❤️', '😘', '😂', '🥰', '👏', '🔥'];
-$('reactions').append(...REACTIONS.map((emoji) => el('button', {
+$('reactions').append(chat.nodes.toggle, el('span', { class: 'reactions-sep' }), ...REACTIONS.map((emoji) => el('button', {
   type: 'button',
   class: 'reaction',
   text: emoji,
@@ -315,6 +325,7 @@ document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('clic
 
 onLangChange(() => {
   syncLangButtons();
+  chat.relabel();
   if (app.room) {
     renderPlayers();
     renderActivityGrid();
