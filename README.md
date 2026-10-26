@@ -7,7 +7,7 @@ Uzak mesafe ilişkisi yürüten çiftler için gerçek zamanlı, birlikte oynana
 
 | | Aktivite | Nasıl oynanır |
 |---|---|---|
-| 🧩 | **Yapboz** | Parçalar ekranın kenarlarında durur; ikiniz aynı anda sürükleyip ortadaki yerlerine yerleştirirsiniz. Hazır resimlerden birini ya da kendi fotoğrafınızı seçin (12 / 24 / 48 parça). |
+| 🧩 | **Yapboz** | Kendi fotoğrafınızı (ya da hazır resimlerden birini) 12'den ~200 parçaya kadar bölün. Parçalar tahtanın iki yanında durur; ikiniz aynı anda sürükleyip yerlerine yerleştirirsiniz. Fotoğrafın oranı korunur (dikey fotoğraflar da olur). Çok parçalı yapbozlar için yakınlaştırma (tekerlek / iki parmak) ve boş alanı sürükleyerek kaydırma var. |
 | 🎨 | **Sayılarla Boyama** | Herhangi bir fotoğraf (kendi fotoğraflarınız ya da hazır olanlar) gerçek boyama kitleri gibi numaralı bölgelere çevrilir. Paletten o numaranın rengini seçip kova ya da fırçayla birlikte boyarsınız. Doğru boyanan bölgenin numarası kaybolur; tablo %100 olunca kutlama başlar. Yakınlaştırma, kaydırma ve örnek resim var; 3 zorluk seviyesi (8/12/16 renk). |
 | 🧱 | **Lego** | Yapboz gibi ama tuğlalarla: kenarlardaki lego tuğlalarını plan üzerindeki aynı boy ve renkteki yerlere oturtun (kalp, ev, çiçek, roket). |
 | 🔤 | **Bil Bakalım** | Wordle gibi. Herkes eşi için gizli bir kelime ya da sayı seçer, sonra turlar halinde aynı anda tahmin edilir. Doğru yerdeki harf/basamak yeşil, başka yerde olan sarı, olmayan gri. |
@@ -72,8 +72,8 @@ test/                 oyun mantığı birim testleri + iki istemcili Socket.IO t
 Fotoğraf, oyunu başlatan kişinin tarayıcısında boyama şablonuna çevrilir (`public/js/lib/pbn.js`: Lab renk
 uzayında k-means ile renk azaltma, gürültü temizleme, küçük bölgeleri komşularıyla birleştirme) ve sunucu üzerinden
 eşe gönderilir, böylece ikiniz de birebir aynı bölgeleri görürsünüz. Hazır fotoğraf eklemek için resmi
-`public/img/paint/` klasörüne koyup `index.json` listesine yazmanız yeterli. Mevcut fotoğrafların kaynakları
-`public/img/paint/CREDITS.md` dosyasında (CC0 / kamu malı).
+`public/img/photos/` klasörüne koyup `index.json` listesine yazmanız yeterli. Mevcut fotoğrafların kaynakları
+`public/img/photos/CREDITS.md` dosyasında (CC0 / kamu malı).
 
 Sürükle-bırak türü oyunlar için `server/activities/drag.js` ve `public/js/lib/dragboard.js` hazır kullanılabilir.
 
@@ -81,8 +81,8 @@ Sürükle-bırak türü oyunlar için `server/activities/drag.js` ve `public/js/
 
 ## English
 
-**Activities:** Jigsaw (pieces start around the edges, both partners drag them into the board at once; built-in
-pictures or your own photo), Paint by Numbers (any photo, yours or a bundled one, is turned into numbered regions like a real paint-by-number kit; bucket or brush, zoom, progress check),
+**Activities:** Jigsaw (split your own photo or a bundled one into 12 to ~200 pieces, keeping its proportions; pieces start
+around the board and both partners drag them in at once; zoom and pan for big puzzles), Paint by Numbers (any photo, yours or a bundled one, is turned into numbered regions like a real paint-by-number kit; bucket or brush, zoom, progress check),
 Lego (snap bricks onto a blueprint), Guess It (Wordle-style: guess the word or number your partner picked, in
 simultaneous rounds) and Bluetooth (both type a word until you type the same one). The UI is available in Turkish and
 English; you can see your partner's cursor and send floating emoji reactions.

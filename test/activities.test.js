@@ -106,10 +106,40 @@ test('lego splits rows into bricks covering every stud', () => {
   }
 });
 
+test('puzzle sizes the grid to the piece count and picture shape', () => {
+  const puzzle = activities.get('puzzle');
+  for (const count of puzzle.PIECE_COUNTS) {
+    for (const aspect of [0.5, 0.75, 4 / 3, 1.5, 2]) {
+      const state = puzzle.create({ pieces: count, image: { kind: 'custom', data: 'data:image/jpeg;base64,AAAA', aspect } });
+      const n = state.rows * state.cols;
+      assert.ok(Math.abs(n - count) / count < 0.2, `${count} pieces @${aspect} gave ${n}`);
+      assert.ok(Math.abs(state.board.w / state.board.h - aspect) < 1e-9);
+      // pieces stay roughly square and every loose piece starts off the board, inside the table
+      const cw = state.board.w / state.cols;
+      const ch = state.board.h / state.rows;
+      assert.ok(cw / ch >= 0.66 && cw / ch <= 1.5, `piece shape ${cw / ch}`);
+      for (const p of state.pieces) {
+        assert.ok(p.x + cw <= state.board.x || p.x >= state.board.x + state.board.w, 'piece starts beside the board');
+        assert.ok(p.x >= 0 && p.x + cw <= state.world.w && p.y >= 0 && p.y + ch <= state.world.h, 'piece inside the table');
+      }
+      const overlapping = state.pieces.some((p, i) => state.pieces.some((q, j) => j > i
+        && Math.abs(p.x - q.x) < cw / 2 && Math.abs(p.y - q.y) < ch / 2));
+      assert.ok(!overlapping, 'loose pieces start without piling up');
+    }
+  }
+});
+
+test('puzzle only accepts bundled photos that exist', () => {
+  const puzzle = activities.get('puzzle');
+  assert.equal(puzzle.create({ image: { kind: 'photo', file: 'cat.jpg', aspect: 1.5 } }).image.kind, 'photo');
+  assert.equal(puzzle.create({ image: { kind: 'photo', file: '../../server/index.js' } }).image.kind, 'builtin');
+  assert.equal(puzzle.create({ image: { kind: 'custom', data: 'javascript:alert(1)' } }).image.kind, 'builtin');
+});
+
 test('drag pieces: grab is exclusive and a near drop snaps into place', () => {
   const pids = ['a', 'b'];
   const puzzle = activities.get('puzzle');
-  const state = puzzle.create({ difficulty: 'easy' }, { players: pids });
+  const state = puzzle.create({ pieces: 12 }, { players: pids });
   assert.equal(state.pieces.length, 12);
   const piece = state.pieces[5];
   puzzle.actions.grab(state, { id: 5 }, fakeCtx('a', pids));

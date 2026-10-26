@@ -1,26 +1,12 @@
 import { el, choiceField } from '../lib/ui.js';
 import { renderArt, ART_IDS } from '../lib/art.js';
 import { buildTemplate, decodeRle, components, GW, GH } from '../lib/pbn.js';
-import { photoToDataUrl, loadImage } from '../lib/photo.js';
+import { photoToDataUrl, loadImage, thumb, addPhotoChoices } from '../lib/photo.js';
 
 const RS = 2; // paint canvas pixels per grid cell
 const ERASER = '#ffffff';
 const DONE_RATIO = 0.85;
 const ZOOMS = [1, 1.5, 2, 3, 4];
-const PHOTO_MANIFEST = '/img/paint/index.json';
-
-/** Optional extra pictures: any { file, title } listed in public/img/paint/index.json. */
-async function loadManifest() {
-  try {
-    const res = await fetch(PHOTO_MANIFEST);
-    if (!res.ok) return [];
-    const list = await res.json();
-    return Array.isArray(list) ? list.filter((p) => p && typeof p.file === 'string') : [];
-  } catch {
-    return [];
-  }
-}
-
 /** Regions, label spots and per-region pixel lists for a template. */
 function analyse(template) {
   const colors = decodeRle(template.rle, GW * GH);
@@ -122,18 +108,6 @@ function makeCanvas() {
   return c;
 }
 
-function thumb(source) {
-  const canvas = el('canvas', { class: 'thumb' });
-  canvas.width = 120;
-  canvas.height = 90;
-  const g = canvas.getContext('2d');
-  const sw = source.naturalWidth || source.width;
-  const sh = source.naturalHeight || source.height;
-  const s = Math.max(120 / sw, 90 / sh);
-  g.drawImage(source, (120 - sw * s) / 2, (90 - sh * s) / 2, sw * s, sh * s);
-  return canvas;
-}
-
 export default {
   id: 'paint',
   icon: '🎨',
@@ -160,29 +134,8 @@ export default {
       image.set('custom');
     });
 
-    // Photos listed in public/img/paint/index.json come right after the upload button.
-    let touched = false;
-    image.group.addEventListener('click', () => { touched = true; });
-    loadManifest().then(async (photos) => {
-      let anchor = uploadBtn;
-      for (const photo of photos) {
-        const value = `photo:${photo.file}`;
-        let img;
-        try {
-          img = await loadImage(`/img/paint/${encodeURIComponent(photo.file)}`);
-        } catch {
-          continue;
-        }
-        sources.set(value, () => img);
-        const title = typeof photo.title === 'object' ? photo.title[lang] || photo.title.en : photo.title;
-        const b = el('button', { type: 'button', class: 'choice choice-preview', role: 'radio', onclick: () => image.set(value) },
-          thumb(img), el('span', { text: title || photo.file }));
-        b.dataset.value = value;
-        anchor.after(b);
-        anchor = b;
-        if (!touched && anchor.previousSibling === uploadBtn) image.set(value);
-      }
-    });
+    // Bundled photos (public/img/photos) come right after the upload button.
+    addPhotoChoices(image, uploadBtn, lang, (value, _file, img) => sources.set(value, () => img));
 
     const detail = choiceField(t('opt.difficulty'), [
       { value: 'easy', label: t('opt.easy') },

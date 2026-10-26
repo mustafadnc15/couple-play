@@ -1,9 +1,10 @@
 import { el, choiceField } from '../lib/ui.js';
 import { DragBoard, roundRect } from '../lib/dragboard.js';
 import { renderArt, ART_IDS } from '../lib/art.js';
-import { photoToDataUrl, loadImage } from '../lib/photo.js';
+import { photoToDataUrl, loadImage, aspectOf, thumb, addPhotoChoices, PHOTO_DIR } from '../lib/photo.js';
 
-const RS = 1.5; // piece bitmap resolution per world unit
+const PIECE_COUNTS = [12, 24, 48, 108, 150, 192];
+const SHADOW = 6; // extra bitmap margin (world units) for the baked-in drop shadow
 
 // Jigsaw tab outline: u runs along the edge (0..1), v sticks out of the piece (in units of the cell's short side).
 const TAB = [
@@ -48,16 +49,11 @@ function piecePath(state, r, c, cw, ch) {
   return path;
 }
 
-async function loadPicture(image) {
-  return image.kind === 'custom' ? loadImage(image.data) : renderArt(image.id);
-}
-
-function thumb(source) {
-  const canvas = el('canvas', { class: 'thumb' });
-  canvas.width = 120;
-  canvas.height = 90;
-  canvas.getContext('2d').drawImage(source, 0, 0, 120, 90);
-  return canvas;
+async function loadPicture(image, board) {
+  if (image.kind === 'custom') return loadImage(image.data);
+  if (image.kind === 'photo') return loadImage(`${PHOTO_DIR}/${encodeURIComponent(image.file)}`);
+  // Built-in pictures are drawn in code, so render them sharp at twice the board size.
+  return renderArt(image.id, Math.round(board.w * 2), Math.round(board.h * 2));
 }
 
 export default {
@@ -65,35 +61,40 @@ export default {
   icon: '🧩',
   accent: '#ff7eb6',
 
-  renderOptions(container, { t }) {
-    const difficulty = choiceField(t('opt.difficulty'), [
-      { value: 'easy', label: `${t('opt.easy')} · 12` },
-      { value: 'medium', label: `${t('opt.medium')} · 24` },
-      { value: 'hard', label: `${t('opt.hard')} · 48` },
-    ], 'medium');
+  renderOptions(container, { t, lang }) {
+    const pieces = choiceField(t('opt.pieces'), PIECE_COUNTS.map((n) => ({ value: String(n), label: String(n) })), '48');
 
-    let custom = null;
+    let custom = null; // { data, img }
+    const photos = new Map();
     const uploadThumb = el('span', { class: 'thumb upload-thumb', text: '📷' });
     const fileInput = el('input', { type: 'file', accept: 'image/*', hidden: true });
     const image = choiceField(t('opt.image'), [
-      ...ART_IDS.map((id) => ({ value: id, label: t(`art.${id}`), preview: thumb(renderArt(id, 240, 180)) })),
       { value: 'custom', label: t('opt.upload'), preview: uploadThumb },
+      ...ART_IDS.map((id) => ({ value: id, label: t(`art.${id}`), preview: thumb(renderArt(id, 240, 180)) })),
     ], ART_IDS[0]);
     const uploadBtn = image.group.querySelector('[data-value="custom"]');
     uploadBtn.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', async () => {
       const file = fileInput.files[0];
       if (!file) return;
-      custom = await photoToDataUrl(file);
-      uploadThumb.replaceWith(thumb(await loadImage(custom)));
+      const data = await photoToDataUrl(file);
+      const img = await loadImage(data);
+      custom = { data, img };
+      uploadBtn.replaceChild(thumb(img), uploadBtn.firstChild);
       image.set('custom');
     });
-    // Without a photo the custom choice falls back to the first built-in picture.
-    container.append(difficulty.node, image.node, fileInput);
-    return () => ({
-      difficulty: difficulty.get(),
-      image: image.get() === 'custom' && custom ? { kind: 'custom', data: custom } : { kind: 'builtin', id: image.get() === 'custom' ? ART_IDS[0] : image.get() },
-    });
+    addPhotoChoices(image, uploadBtn, lang, (value, file, img) => photos.set(value, { file, img }));
+    container.append(image.node, pieces.node, fileInput);
+
+    return () => {
+      const choice = image.get();
+      let picture;
+      if (choice === 'custom' && custom) picture = { kind: 'custom', data: custom.data, aspect: aspectOf(custom.img) };
+      else if (photos.has(choice)) picture = { kind: 'photo', file: photos.get(choice).file, aspect: aspectOf(photos.get(choice).img) };
+      // Without an uploaded photo the custom choice falls back to the first built-in picture.
+      else picture = { kind: 'builtin', id: ART_IDS.includes(choice) ? choice : ART_IDS[0] };
+      return { pieces: Number(pieces.get()), image: picture };
+    };
   },
 
   mount(root, api) {
@@ -139,16 +140,17 @@ export default {
       },
       drawPiece(ctx, p, color) {
         if (!geo) return;
-        const { pad, cw, ch } = geo;
-        if (!p.placed) {
-          ctx.shadowColor = color || 'rgba(40, 0, 40, 0.35)';
-          ctx.shadowBlur = color ? 18 : 6;
-          ctx.shadowOffsetY = color ? 0 : 2;
+        const m = geo.pad + SHADOW;
+        // Shadows are baked into the bitmaps; only pieces in someone's hand get a live glow.
+        if (color) {
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 16;
         }
-        ctx.drawImage(geo.bitmaps[p.id], p.x - pad, p.y - pad, cw + 2 * pad, ch + 2 * pad);
-        ctx.shadowColor = 'transparent';
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetY = 0;
+        ctx.drawImage(geo.bitmaps[p.id], p.x - m, p.y - m, geo.cw + 2 * m, geo.ch + 2 * m);
+        if (color) {
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+        }
       },
       hit(p, x, y) {
         return geo ? hitCtx.isPointInPath(geo.paths[p.id], x - p.x, y - p.y) : false;
@@ -162,31 +164,50 @@ export default {
 
     async function build(s) {
       const token = ++loadToken;
-      const img = await loadPicture(s.image);
+      const img = await loadPicture(s.image, s.board);
       if (token !== loadToken) return;
       const cw = s.board.w / s.cols;
       const ch = s.board.h / s.rows;
       const pad = Math.round(Math.min(cw, ch) * 0.3);
+      const m = pad + SHADOW;
+      const imgW = img.naturalWidth || img.width;
+      const imgH = img.naturalHeight || img.height;
+      const kx = imgW / s.board.w; // image pixels per world unit
+      const ky = imgH / s.board.h;
+      const rs = Math.min(2.5, Math.max(1, kx)); // bitmap pixels per world unit
       const paths = [];
       const bitmaps = [];
       for (let r = 0; r < s.rows; r++) {
         for (let c = 0; c < s.cols; c++) {
           const path = piecePath(s, r, c, cw, ch);
           const canvas = document.createElement('canvas');
-          canvas.width = Math.ceil((cw + 2 * pad) * RS);
-          canvas.height = Math.ceil((ch + 2 * pad) * RS);
+          canvas.width = Math.ceil((cw + 2 * m) * rs);
+          canvas.height = Math.ceil((ch + 2 * m) * rs);
           const g = canvas.getContext('2d');
-          g.scale(RS, RS);
-          g.translate(pad, pad);
+          g.scale(rs, rs);
+          g.translate(m, m);
+          // drop shadow (shadow sizes are in device pixels, so scale them by rs)
+          g.save();
+          g.shadowColor = 'rgba(40, 0, 40, 0.4)';
+          g.shadowBlur = 4 * rs;
+          g.shadowOffsetY = 1.5 * rs;
+          g.fillStyle = '#888';
+          g.fill(path);
+          g.restore();
+          // only the part of the picture this piece covers (cheap even for 200 pieces)
           g.save();
           g.clip(path);
-          g.drawImage(img, -c * cw, -r * ch, s.board.w, s.board.h);
+          const x0 = Math.max(0, c * cw - pad);
+          const y0 = Math.max(0, r * ch - pad);
+          const x1 = Math.min(s.board.w, (c + 1) * cw + pad);
+          const y1 = Math.min(s.board.h, (r + 1) * ch + pad);
+          g.drawImage(img, x0 * kx, y0 * ky, (x1 - x0) * kx, (y1 - y0) * ky, x0 - c * cw, y0 - r * ch, x1 - x0, y1 - y0);
           g.restore();
-          g.lineWidth = 1.4;
-          g.strokeStyle = 'rgba(0,0,0,0.35)';
+          g.lineWidth = 1.2;
+          g.strokeStyle = 'rgba(0,0,0,0.3)';
           g.stroke(path);
-          g.translate(-0.7, -0.7);
-          g.lineWidth = 0.9;
+          g.translate(-0.6, -0.6);
+          g.lineWidth = 0.8;
           g.strokeStyle = 'rgba(255,255,255,0.45)';
           g.stroke(path);
           paths.push(path);
@@ -201,6 +222,7 @@ export default {
       onState(s) {
         const fresh = !state;
         state = s;
+        board.setWorld(s.world);
         board.setPieces(s.pieces);
         updateProgress();
         if (fresh) build(s);

@@ -1,6 +1,6 @@
 # Photo credits
 
-Photos in this folder are offered as paint-by-number pictures. They come from the sample data shipped
+Photos in this folder are offered as paint-by-number and jigsaw pictures. They come from the sample data shipped
 with [scikit-image](https://scikit-image.org/):
 
 | File | Photo | License |
