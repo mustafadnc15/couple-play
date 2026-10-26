@@ -1,0 +1,30 @@
+{
+  "name": "couple-play",
+  "version": "1.0.0",
+  "description": "Real-time games for long-distance couples: jigsaw, paint by numbers, lego, word guessing and bluetooth.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mustafadnc15/couple-play.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mustafadnc15/couple-play/issues"
+  },
+  "homepage": "https://github.com/mustafadnc15/couple-play#readme",
+  "dependencies": {
+    "express": "^4.22.3",
+    "socket.io": "^4.8.4"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CouplePlay</title>
+  <meta name="description" content="Uzak mesafe ilişkisi yaşayan çiftler için birlikte oynanan gerçek zamanlı aktiviteler.">
+  <meta name="theme-color" content="#ff4f81">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" id="brand"><span class="brand-icon">💞</span><span>CouplePlay</span></a>
+    <div class="topbar-room" id="topbar-room" hidden>
+      <span class="chip" id="room-chip"></span>
+      <div class="players" id="players"></div>
+    </div>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="tr">TR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Home -->
+    <section id="view-home" class="view">
+      <div class="hero">
+        <div class="hero-text">
+          <p class="eyebrow" data-i18n="app.tagline"></p>
+          <h1 data-i18n="home.title"></h1>
+          <p class="lead" data-i18n="home.subtitle"></p>
+          <ul class="features">
+            <li data-i18n="home.f1"></li>
+            <li data-i18n="home.f2"></li>
+            <li data-i18n="home.f3"></li>
+          </ul>
+        </div>
+        <form class="card join-card" id="join-form" autocomplete="off">
+          <label class="field">
+            <span data-i18n="home.name"></span>
+            <input id="name-input" maxlength="24" data-i18n-ph="home.namePh" required>
+          </label>
+          <button type="button" class="btn btn-primary btn-block" id="create-btn" data-i18n="home.create"></button>
+          <div class="divider"><span data-i18n="home.or"></span></div>
+          <div class="join-row">
+            <input id="code-input" maxlength="8" data-i18n-ph="home.codePh" autocapitalize="characters" spellcheck="false">
+            <button type="submit" class="btn btn-secondary" data-i18n="home.join"></button>
+          </div>
+          <p class="form-error" id="home-error" role="alert"></p>
+        </form>
+      </div>
+    </section>
+
+    <!-- Room lobby -->
+    <section id="view-lobby" class="view" hidden>
+      <div class="lobby-top">
+        <div class="card invite-card" id="invite-card">
+          <h2 data-i18n="room.invite"></h2>
+          <p class="muted" data-i18n="room.inviteHint"></p>
+          <div class="invite-row">
+            <input id="invite-link" readonly>
+            <button type="button" class="btn btn-secondary" id="copy-btn" data-i18n="room.copy"></button>
+            <button type="button" class="btn btn-secondary" id="share-btn" data-i18n="room.share" hidden></button>
+          </div>
+          <p class="big-code" id="big-code"></p>
+        </div>
+        <div class="card status-card">
+          <p class="status-text" id="status-text"></p>
+          <button type="button" class="btn btn-ghost" id="leave-btn" data-i18n="room.leave"></button>
+        </div>
+      </div>
+      <h2 class="section-title" data-i18n="room.choose"></h2>
+      <div class="activity-grid" id="activity-grid"></div>
+      <p class="muted center soon" data-i18n="room.soon"></p>
+    </section>
+
+    <!-- Running activity -->
+    <section id="view-activity" class="view" hidden>
+      <div class="activity-bar">
+        <button type="button" class="btn btn-ghost btn-sm" id="back-btn">← <span data-i18n="room.back"></span></button>
+        <h2 id="activity-title"></h2>
+        <div class="activity-tools" id="activity-tools"></div>
+      </div>
+      <div class="activity-root" id="activity-root"></div>
+    </section>
+  </main>
+
+  <div class="reactions" id="reactions"></div>
+  <div class="float-layer" id="float-layer" aria-hidden="true"></div>
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <dialog class="modal" id="options-modal">
+    <form method="dialog" class="modal-body" id="options-form">
+      <h2 id="options-title"></h2>
+      <div id="options-fields"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="options-cancel" data-i18n="opt.cancel"></button>
+        <button type="submit" class="btn btn-primary" data-i18n="opt.start"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>
