@@ -214,11 +214,25 @@ function openOptions(activity) {
   const fields = $('options-fields');
   fields.replaceChildren();
   const collect = activity.renderOptions ? activity.renderOptions(fields, { t, lang: getLang() }) : () => ({});
+  const submit = $('options-form').querySelector('button[type=submit]');
+  submit.disabled = false;
+  submit.textContent = t('opt.start');
   $('options-form').onsubmit = async (e) => {
     e.preventDefault();
-    const options = await collect();
-    socket.emit('room:select', { id: activity.id, options });
-    modal.close();
+    if (submit.disabled) return;
+    submit.disabled = true;
+    submit.textContent = t('opt.preparing');
+    try {
+      const options = await collect();
+      socket.emit('room:select', { id: activity.id, options });
+      modal.close();
+    } catch (err) {
+      console.error(err);
+      toast(t('opt.failed'));
+    } finally {
+      submit.disabled = false;
+      submit.textContent = t('opt.start');
+    }
   };
   $('options-cancel').onclick = () => modal.close();
   modal.showModal();

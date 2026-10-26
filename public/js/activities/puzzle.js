@@ -1,6 +1,7 @@
 import { el, choiceField } from '../lib/ui.js';
 import { DragBoard, roundRect } from '../lib/dragboard.js';
 import { renderArt, ART_IDS } from '../lib/art.js';
+import { photoToDataUrl, loadImage } from '../lib/photo.js';
 
 const RS = 1.5; // piece bitmap resolution per world unit
 
@@ -47,36 +48,8 @@ function piecePath(state, r, c, cw, ch) {
   return path;
 }
 
-async function loadImage(image) {
-  if (image.kind === 'custom') {
-    const img = new Image();
-    img.src = image.data;
-    await img.decode();
-    return img;
-  }
-  return renderArt(image.id);
-}
-
-/** Center-crop an uploaded photo to 4:3 and shrink it so it travels well over the socket. */
-async function photoToDataUrl(file) {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.src = url;
-    await img.decode();
-    const target = 4 / 3;
-    let sw = img.naturalWidth;
-    let sh = img.naturalHeight;
-    if (sw / sh > target) sw = sh * target;
-    else sh = sw / target;
-    const canvas = document.createElement('canvas');
-    canvas.width = 960;
-    canvas.height = 720;
-    canvas.getContext('2d').drawImage(img, (img.naturalWidth - sw) / 2, (img.naturalHeight - sh) / 2, sw, sh, 0, 0, 960, 720);
-    return canvas.toDataURL('image/jpeg', 0.85);
-  } finally {
-    URL.revokeObjectURL(url);
-  }
+async function loadPicture(image) {
+  return image.kind === 'custom' ? loadImage(image.data) : renderArt(image.id);
 }
 
 function thumb(source) {
@@ -112,10 +85,7 @@ export default {
       const file = fileInput.files[0];
       if (!file) return;
       custom = await photoToDataUrl(file);
-      const img = new Image();
-      img.src = custom;
-      await img.decode();
-      uploadThumb.replaceWith(thumb(img));
+      uploadThumb.replaceWith(thumb(await loadImage(custom)));
       image.set('custom');
     });
     // Without a photo the custom choice falls back to the first built-in picture.
@@ -192,7 +162,7 @@ export default {
 
     async function build(s) {
       const token = ++loadToken;
-      const img = await loadImage(s.image);
+      const img = await loadPicture(s.image);
       if (token !== loadToken) return;
       const cw = s.board.w / s.cols;
       const ch = s.board.h / s.rows;

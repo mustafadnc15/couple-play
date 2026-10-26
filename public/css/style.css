@@ -54,6 +54,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
   white-space: nowrap;
 }
 .btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.6; cursor: wait; }
 .btn-primary {
   color: #fff;
   background: linear-gradient(135deg, var(--pink), #ff7a59);
@@ -251,8 +252,10 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 /* ---------- paint ---------- */
 
 .paint-layout { flex: 1; min-height: 0; display: flex; gap: 0.8rem; }
-.paint-stage-wrap { flex: 1; min-width: 0; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.paint-stage-wrap { flex: 1; min-width: 0; min-height: 0; display: flex; overflow: auto; border-radius: 12px; }
 .paint-stage {
+  flex: none;
+  margin: auto;
   position: relative;
   background: #fff;
   border-radius: 12px;
@@ -261,8 +264,12 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 }
 .paint-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
 .paint-lines { touch-action: none; cursor: crosshair; }
+.zoom-box { display: flex; align-items: center; gap: 0.4rem; }
+.zoom-label { font-weight: 800; font-size: 0.85rem; min-width: 3.2rem; text-align: center; }
+.paint-ref canvas { width: 100%; height: auto; border-radius: 10px; box-shadow: var(--shadow); display: block; }
 .paint-side { width: 190px; display: flex; flex-direction: column; gap: 0.8rem; overflow: auto; }
 .palette { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
+.palette .swatch { font-size: 0.85rem; }
 .swatch {
   font: inherit;
   font-weight: 900;
@@ -456,7 +463,8 @@ body[data-view='home'] .reactions { display: none; }
   .paint-layout { flex-direction: column; }
   .paint-side { width: 100%; flex-direction: row; flex-wrap: wrap; overflow: visible; }
   .palette { grid-template-columns: repeat(auto-fill, 38px); flex: 1; }
-  .paint-tools { grid-template-columns: auto auto 1fr; align-items: center; }
+  .paint-tools { grid-template-columns: repeat(3, auto) 1fr auto; align-items: center; }
+  .paint-ref { display: none; }
 }
 
 @media (max-width: 560px) {

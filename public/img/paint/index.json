@@ -1,0 +1,5 @@
+[
+  { "file": "coffee.jpg", "title": { "tr": "Kahve molası", "en": "Coffee date" } },
+  { "file": "cat.jpg", "title": { "tr": "Kedi", "en": "Kitty" } },
+  { "file": "rocket.jpg", "title": { "tr": "Roket fırlatışı", "en": "Rocket launch" } }
+]

@@ -1,16 +1,44 @@
 'use strict';
 
-const { clamp, pick } = require('./util');
+const { clamp } = require('./util');
 
-// Template drawings live on the client (public/js/activities/paintTemplates.js); the server only
-// keeps the shared list of paint operations so a partner joining late sees the same canvas.
-const TEMPLATES = ['sunset', 'house', 'balloons'];
+// The partner who starts the game converts a picture into a template on their device (see
+// public/js/lib/pbn.js) and sends it here; the server validates it and keeps the shared list of
+// paint operations so a partner joining late sees the same canvas.
+const GRID = { w: 600, h: 450 };
+const MAX_COLORS = 24;
 const MAX_OPS = 20000;
 const MAX_POINTS_PER_OP = 600;
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
 
+/** Template = { w, h, palette: ['#rrggbb'], rle: [colorIndex, runLength, ...] } covering the whole grid. */
+function cleanTemplate(t) {
+  if (!t || t.w !== GRID.w || t.h !== GRID.h) return null;
+  const { palette, rle } = t;
+  if (!Array.isArray(palette) || palette.length < 1 || palette.length > MAX_COLORS) return null;
+  if (!palette.every((c) => typeof c === 'string' && COLOR_RE.test(c))) return null;
+  if (!Array.isArray(rle) || rle.length % 2 || rle.length > GRID.w * GRID.h * 2) return null;
+  let total = 0;
+  for (let i = 0; i < rle.length; i += 2) {
+    const color = rle[i];
+    const run = rle[i + 1];
+    if (!Number.isInteger(color) || color < 0 || color >= palette.length) return null;
+    if (!Number.isInteger(run) || run < 1) return null;
+    total += run;
+  }
+  if (total !== GRID.w * GRID.h) return null;
+  return { w: GRID.w, h: GRID.h, palette: palette.map((c) => c.toLowerCase()), rle };
+}
+
 function create(options) {
-  return { template: pick(TEMPLATES, options.template, TEMPLATES[0]), ops: [], completed: false };
+  const template = cleanTemplate(options.template);
+  if (!template) throw new Error('invalid paint template');
+  return {
+    template,
+    title: typeof options.title === 'string' ? options.title.slice(0, 40) : '',
+    ops: [],
+    completed: false,
+  };
 }
 
 function cleanPoints(pts) {
@@ -19,7 +47,7 @@ function cleanPoints(pts) {
   for (let i = 0; i < out.length; i++) {
     const v = Number(pts[i]);
     if (!Number.isFinite(v)) return null;
-    out[i] = Math.round(clamp(v, -50, 900) * 10) / 10;
+    out[i] = Math.round(clamp(v, -50, 700) * 10) / 10;
   }
   return out;
 }
@@ -38,7 +66,7 @@ module.exports = {
     },
     fill(state, data, ctx) {
       if (state.ops.length >= MAX_OPS || !COLOR_RE.test(data.color)) return;
-      const op = { t: 'f', c: data.color, r: clamp(data.region | 0, 0, 500) };
+      const op = { t: 'f', c: data.color, r: clamp(data.region | 0, 0, GRID.w * GRID.h) };
       state.ops.push(op);
       ctx.emitOthers('op', op);
     },
@@ -54,4 +82,5 @@ module.exports = {
       ctx.emitAll('complete', {});
     },
   },
+  _cleanTemplate: cleanTemplate,
 };

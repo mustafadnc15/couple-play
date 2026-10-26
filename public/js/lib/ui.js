@@ -31,7 +31,7 @@ export function el(tag, attrs = {}, ...children) {
 export function choiceField(label, choices, value) {
   let current = value ?? choices[0].value;
   const group = el('div', { class: 'choices', role: 'radiogroup' });
-  const buttons = choices.map((c) => {
+  choices.forEach((c) => {
     const b = el('button', {
       type: 'button',
       class: `choice${c.preview ? ' choice-preview' : ''}`,
@@ -40,11 +40,10 @@ export function choiceField(label, choices, value) {
     }, c.preview || null, el('span', { text: c.label }));
     b.dataset.value = c.value;
     group.append(b);
-    return b;
   });
   function select(v) {
     current = v;
-    buttons.forEach((b) => {
+    group.querySelectorAll('.choice').forEach((b) => {
       const on = b.dataset.value === String(v);
       b.classList.toggle('active', on);
       b.setAttribute('aria-checked', on ? 'true' : 'false');

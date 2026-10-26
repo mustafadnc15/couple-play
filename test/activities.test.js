@@ -141,9 +141,27 @@ test('lego bricks snap to any free slot of the same size and colour', () => {
   assert.equal(twin.filled, piece.id);
 });
 
+function paintTemplate() {
+  // Two colours: left half 0, right half 1, on the 600×450 grid.
+  const rle = [];
+  for (let y = 0; y < 450; y++) rle.push(0, 300, 1, 300);
+  return { w: 600, h: 450, palette: ['#FF0000', '#00ff00'], rle };
+}
+
+test('paint validates templates sent by the client', () => {
+  const paint = activities.get('paint');
+  assert.ok(paint._cleanTemplate(paintTemplate()));
+  assert.equal(paint._cleanTemplate(paintTemplate()).palette[0], '#ff0000');
+  assert.equal(paint._cleanTemplate({ ...paintTemplate(), rle: [0, 10] }), null, 'must cover the grid');
+  assert.equal(paint._cleanTemplate({ ...paintTemplate(), rle: [5, 270000] }), null, 'colour index out of range');
+  assert.equal(paint._cleanTemplate({ ...paintTemplate(), palette: ['red'] }), null);
+  assert.equal(paint._cleanTemplate({ ...paintTemplate(), w: 10 }), null);
+  assert.throws(() => paint.create({}));
+});
+
 test('paint rejects malformed operations', () => {
   const paint = activities.get('paint');
-  const state = paint.create({ template: 'house' });
+  const state = paint.create({ template: paintTemplate() });
   const ctx = fakeCtx('a', ['a']);
   paint.actions.stroke(state, { color: 'red', size: 5, pts: [1, 2] }, ctx);
   paint.actions.stroke(state, { color: '#ff0000', size: 5, pts: ['x', 2] }, ctx);
