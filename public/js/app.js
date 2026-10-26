@@ -301,6 +301,15 @@ const chat = createChat({ socket, t, getLang, me: () => app.me, player });
 document.body.append(chat.nodes.panel, chat.nodes.preview);
 document.addEventListener('cp:toast', (e) => toast(e.detail));
 
+// Touch devices: note when the on-screen keyboard is likely open, so floating bars can step aside.
+if (window.matchMedia('(pointer: coarse)').matches) {
+  const typingTarget = (node) => node instanceof HTMLElement && node.matches('input:not([type=range]):not([type=file]), textarea');
+  document.addEventListener('focusin', (e) => document.body.classList.toggle('kb-open', typingTarget(e.target)));
+  document.addEventListener('focusout', () => setTimeout(() => {
+    document.body.classList.toggle('kb-open', typingTarget(document.activeElement));
+  }, 50));
+}
+
 /* ---------- reactions ---------- */
 
 const REACTIONS = ['❤️', '😘', '😂', '🥰', '👏', '🔥'];

@@ -329,16 +329,28 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
 /* ---------- guess ---------- */
 
-.guess { max-width: 760px; width: 100%; margin: 0 auto; padding: 0.5rem 0 1rem; }
-.guess-setup { display: grid; gap: 0.8rem; text-align: center; max-width: 480px; margin: 2rem auto; }
-.secret-row { display: flex; gap: 0.5rem; justify-content: center; }
-.secret-input { text-transform: uppercase; letter-spacing: 0.3em; font-weight: 900; font-size: 1.4rem; text-align: center; width: 12ch; }
+.guess { max-width: 760px; width: 100%; margin: 0 auto; padding: 0.5rem 0 1rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; justify-items: center; }
+.guess.setup { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.4rem; max-width: 480px; margin: 2rem auto; }
+.guess-top, .guess-bottom { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.6rem; justify-items: center; width: 100%; }
+.guess .lead, .guess .status { max-width: 100%; overflow-wrap: break-word; }
+.guess-bar { display: flex; gap: 0.5rem; justify-content: center; width: 100%; max-width: 420px; }
+/* 16px+ font so iOS doesn't zoom in when the field is focused */
+.guess-input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-weight: 900;
+  font-size: 1.4rem;
+  text-align: center;
+}
+.guess-input::placeholder { letter-spacing: 0.2em; font-size: 1rem; font-weight: 700; text-transform: none; }
 .status { font-weight: 800; text-align: center; margin: 0.4rem 0; }
 .status.big { font-size: 1.25rem; }
 .status.win { color: var(--pink); }
 .pulse { animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.45; } }
-.reveal { text-align: center; font-weight: 800; margin: 0; }
+.reveal-text { text-align: center; font-weight: 800; margin: 0; }
 .guess-play { display: grid; gap: 0.6rem; justify-items: center; }
 .boards { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; width: 100%; }
 .board-col { display: grid; gap: 0.5rem; justify-items: center; align-content: start; }
@@ -362,7 +374,8 @@ main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .g-cell.filled { border-color: #c9b8d8; }
 .g-row.current .g-cell.filled { animation: pop 0.12s ease; }
 .g-row.pending .g-cell { border-style: dashed; color: var(--muted); }
-.g-cell.m-g, .g-cell.m-y, .g-cell.m-x { color: #fff; border-color: transparent; animation: flip 0.45s ease both; }
+.g-cell.m-g, .g-cell.m-y, .g-cell.m-x { color: #fff; border-color: transparent; }
+.g-row.reveal .g-cell { animation: flip 0.45s ease both; }
 .g-cell.m-g { background: var(--green); }
 .g-cell.m-y { background: var(--yellow); }
 .g-cell.m-x { background: var(--grey); }
@@ -642,5 +655,7 @@ body[data-view='home'] .chat-panel, body[data-view='home'] .chat-preview { displ
   .reactions { right: 50%; transform: translateX(50%); }
   .chat-panel { right: 0.5rem; left: 0.5rem; width: auto; bottom: 4rem; height: min(70dvh, calc(100dvh - var(--header-h) - 5rem)); }
   .chat-preview { right: 50%; translate: 50% 0; bottom: 4rem; }
+  /* While the phone keyboard is open, the floating emoji bar would cover the input. */
+  body.kb-open .reactions, body.kb-open .chat-preview { display: none; }
   #view-activity { padding-bottom: 4rem; }
 }
