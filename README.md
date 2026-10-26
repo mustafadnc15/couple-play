@@ -29,12 +29,46 @@ npm test
 
 Port `PORT` ortam değişkeniyle değiştirilebilir.
 
-### Yayına alma
+### Yayına alma (deploy)
 
-Uygulama WebSocket kullanan tek bir Node.js sunucusudur; Render, Railway, Fly.io gibi Node çalıştıran herhangi bir
-yerde `npm install && npm start` ile çalışır. (GitHub Pages/statik hosting yeterli değildir, çünkü gerçek zamanlı
-senkronizasyon için sunucu gerekir.) Odalar bellekte tutulur: sunucu yeniden başlarsa açık odalar sıfırlanır,
-6 saat kullanılmayan odalar otomatik silinir.
+Uygulama WebSocket kullanan tek bir Node.js sunucusudur. GitHub Pages gibi statik barındırma yetmez; sürekli çalışan
+bir Node.js sunucusu gerekir. Odalar bellekte tutulduğu için **tek bir sunucu (instance) çalıştırın**: birden fazla
+kopyaya ölçeklenirse eşler farklı kopyalara düşüp birbirini göremez.
+
+#### Render ile (önerilen, en kolay)
+
+Depoda hazır bir `render.yaml` var (Render Blueprint).
+
+1. [render.com](https://render.com)'da GitHub hesabınızla oturum açın.
+2. **New → Blueprint** seçin, `couple-play` deposunu ve yayınlamak istediğiniz dalı seçin.
+3. Render `ADMIN_PASSWORD` değerini sorar: `/admin` sayfası için bir şifre yazın.
+4. **Apply** deyin. Birkaç dakika sonra site `https://couple-play-xxxx.onrender.com` gibi bir adreste açılır.
+   Bundan sonra o dala her `git push` yaptığınızda site kendiliğinden güncellenir.
+
+Blueprint, yüklenen fotoğrafların kaybolmaması için 1 GB'lık kalıcı bir disk (`/var/data`) ekler. Kalıcı disk
+yalnızca ücretli planlarda (Starter) var. Sadece denemek isterseniz `render.yaml`'da `plan: free` yapıp `disk`
+bölümünü silebilirsiniz; o zaman:
+- yüklenen fotoğraflar her yeniden başlatmada/deploy'da silinir,
+- site 15 dakika kullanılmayınca uyur, ilk açılış yarım dakika kadar sürebilir ve açık odalar kapanır.
+
+Güncel fiyatlar için Render'ın fiyat sayfasına bakın.
+
+#### Docker ile (Railway, Fly.io, kendi sunucunuz…)
+
+Depodaki `Dockerfile` her container servisinde çalışır. Ayarlamanız gerekenler:
+- `ADMIN_PASSWORD` ortam değişkeni,
+- `/data` klasörüne bağlı kalıcı bir volume (fotoğraflar oraya kaydedilir),
+- dışarıya açılan port: `3000` (ya da servisin verdiği `PORT`).
+
+```bash
+docker build -t couple-play .
+docker run -p 3000:3000 -e ADMIN_PASSWORD=sifreniz -v couple-play-data:/data couple-play
+```
+
+#### Kendi alan adınız
+
+Render, Railway ve Fly.io'da ayarlardan özel alan adı (ör. `bizimoyunlar.com`) ekleyebilir, DNS kaydını
+girdikten sonra HTTPS sertifikasını otomatik alabilirsiniz.
 
 ### Fotoğraf kütüphanesi (`/admin`)
 
@@ -110,5 +144,9 @@ English; you can see your partner's cursor and send floating emoji reactions.
 **Photo library:** set `ADMIN_PASSWORD` and open `/admin` to upload photos (drag & drop, several at once, with a
 paint-by-number preview and TR/EN titles). They show up automatically in the Jigsaw and Paint pickers for every room.
 Uploads are stored in `DATA_DIR` (default `./data`); on hosts with ephemeral disks, mount a persistent volume there.
+
+**Deploy:** on Render, use *New → Blueprint* with this repo (`render.yaml` sets up the service, a 1 GB disk for
+uploads and asks for `ADMIN_PASSWORD`). Anywhere else, use the `Dockerfile` and mount a volume at `/data`.
+Run a single instance: rooms live in memory.
 
 **Adding an activity:** see "Yeni aktivite eklemek" above: one server module, one client module and two i18n strings.

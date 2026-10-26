@@ -1,0 +1,23 @@
+# Render Blueprint: Dashboard → New → Blueprint → pick this repository.
+# Render asks for ADMIN_PASSWORD when the Blueprint is created.
+services:
+  - type: web
+    name: couple-play
+    runtime: node
+    # Persistent disks need a paid instance; on the free plan uploaded photos are lost on every
+    # restart/deploy and the app sleeps when idle (see README).
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATA_DIR
+        value: /var/data
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: photos
+      mountPath: /var/data
+      sizeGB: 1
