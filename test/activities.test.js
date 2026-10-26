@@ -129,10 +129,12 @@ test('puzzle sizes the grid to the piece count and picture shape', () => {
   }
 });
 
-test('puzzle only accepts bundled photos that exist', () => {
+test('puzzle only accepts library photos that exist', () => {
   const puzzle = activities.get('puzzle');
-  assert.equal(puzzle.create({ image: { kind: 'photo', file: 'cat.jpg', aspect: 1.5 } }).image.kind, 'photo');
-  assert.equal(puzzle.create({ image: { kind: 'photo', file: '../../server/index.js' } }).image.kind, 'builtin');
+  const photos = { get: (id) => (id === 'cat.jpg' ? { id, url: '/img/photos/cat.jpg' } : null) };
+  const ok = puzzle.create({ image: { kind: 'photo', id: 'cat.jpg', aspect: 1.5 } }, { photos });
+  assert.deepEqual(ok.image, { kind: 'photo', id: 'cat.jpg', url: '/img/photos/cat.jpg', aspect: 1.5 });
+  assert.equal(puzzle.create({ image: { kind: 'photo', id: '../../server/index.js' } }, { photos }).image.kind, 'builtin');
   assert.equal(puzzle.create({ image: { kind: 'custom', data: 'javascript:alert(1)' } }).image.kind, 'builtin');
 });
 

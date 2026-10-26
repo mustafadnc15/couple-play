@@ -36,6 +36,22 @@ yerde `npm install && npm start` ile çalışır. (GitHub Pages/statik hosting y
 senkronizasyon için sunucu gerekir.) Odalar bellekte tutulur: sunucu yeniden başlarsa açık odalar sıfırlanır,
 6 saat kullanılmayan odalar otomatik silinir.
 
+### Fotoğraf kütüphanesi (`/admin`)
+
+Sitenin `/admin` sayfasından fotoğraf yükleyebilirsiniz. Birden fazla fotoğrafı sürükleyip bırakın, her birinin
+boyama önizlemesine bakın, Türkçe/İngilizce başlık verin ve yükleyin. Yüklenen fotoğraflar tüm odalarda Yapboz ve
+Sayılarla Boyama'nın resim listesinde otomatik olarak en başta çıkar; aynı sayfadan silinebilir.
+
+| Ortam değişkeni | Açıklama |
+|---|---|
+| `ADMIN_PASSWORD` | `/admin` sayfasının şifresi. Ayarlanmazsa yükleme kapalıdır. |
+| `DATA_DIR` | Yüklenen fotoğrafların saklandığı klasör (varsayılan: `./data`). |
+| `PORT` | Sunucu portu (varsayılan: 3000). |
+
+> ⚠️ Birçok barındırma servisinde (ör. Render'ın ücretsiz planı) disk her yeniden dağıtımda sıfırlanır. Fotoğrafların
+> kalıcı olması için kalıcı bir disk/volume bağlayın (Render Disk, Railway Volume, Fly Volume) ve `DATA_DIR`'i o
+> klasöre ayarlayın.
+
 ## Teknoloji
 
 - **Sunucu:** Node.js, Express, Socket.IO. Oyun durumu sunucuda tutulur (otoriter); örneğin Bil Bakalım'da eşin
@@ -71,9 +87,9 @@ test/                 oyun mantığı birim testleri + iki istemcili Socket.IO t
 
 Fotoğraf, oyunu başlatan kişinin tarayıcısında boyama şablonuna çevrilir (`public/js/lib/pbn.js`: Lab renk
 uzayında k-means ile renk azaltma, gürültü temizleme, küçük bölgeleri komşularıyla birleştirme) ve sunucu üzerinden
-eşe gönderilir, böylece ikiniz de birebir aynı bölgeleri görürsünüz. Hazır fotoğraf eklemek için resmi
-`public/img/photos/` klasörüne koyup `index.json` listesine yazmanız yeterli. Mevcut fotoğrafların kaynakları
-`public/img/photos/CREDITS.md` dosyasında (CC0 / kamu malı).
+eşe gönderilir, böylece ikiniz de birebir aynı bölgeleri görürsünüz. Resim listesi `/api/photos`'tan gelir:
+`/admin` ile yüklenenler (`DATA_DIR`) ve depoyla gelen hazır fotoğraflar (`public/img/photos/`, kaynakları
+`CREDITS.md` dosyasında, CC0 / kamu malı).
 
 Sürükle-bırak türü oyunlar için `server/activities/drag.js` ve `public/js/lib/dragboard.js` hazır kullanılabilir.
 
@@ -90,5 +106,9 @@ English; you can see your partner's cursor and send floating emoji reactions.
 **Run:** `npm install && npm start`, then open http://localhost:3000, create a room and send the link to your partner.
 `npm test` runs the test suite. Deploy anywhere that runs a long-lived Node.js process with WebSockets
 (Render, Railway, Fly.io, a VPS…). Rooms are kept in memory.
+
+**Photo library:** set `ADMIN_PASSWORD` and open `/admin` to upload photos (drag & drop, several at once, with a
+paint-by-number preview and TR/EN titles). They show up automatically in the Jigsaw and Paint pickers for every room.
+Uploads are stored in `DATA_DIR` (default `./data`); on hosts with ephemeral disks, mount a persistent volume there.
 
 **Adding an activity:** see "Yeni aktivite eklemek" above: one server module, one client module and two i18n strings.

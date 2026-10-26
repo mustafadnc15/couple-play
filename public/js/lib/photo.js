@@ -1,7 +1,6 @@
-/** Helpers for photos: user uploads and the bundled pictures in public/img/photos. */
+/** Helpers for photos: one-off uploads and the shared picture library (/api/photos). */
 import { el } from './ui.js';
 
-export const PHOTO_DIR = '/img/photos';
 const MIN_ASPECT = 0.5;
 const MAX_ASPECT = 2;
 
@@ -42,16 +41,20 @@ export async function photoToDataUrl(file, maxSide = 1600) {
   }
 }
 
-/** Bundled pictures: [{ file, title: { tr, en } }] from public/img/photos/index.json. */
-export async function loadManifest() {
+/** The picture library: [{ id, url, title: { tr, en }, bundled }], uploads first. */
+export async function loadLibrary() {
   try {
-    const res = await fetch(`${PHOTO_DIR}/index.json`);
+    const res = await fetch('/api/photos', { cache: 'no-cache' });
     if (!res.ok) return [];
     const list = await res.json();
-    return Array.isArray(list) ? list.filter((p) => p && typeof p.file === 'string') : [];
+    return Array.isArray(list) ? list : [];
   } catch {
     return [];
   }
+}
+
+export function photoTitle(photo, lang) {
+  return (photo.title && (photo.title[lang] || photo.title.en || photo.title.tr)) || '';
 }
 
 export function thumb(source, w = 120, h = 90) {
@@ -67,31 +70,27 @@ export function thumb(source, w = 120, h = 90) {
 }
 
 /**
- * Add the bundled photos to a choiceField right after `anchor` (the upload button).
- * `onPhoto(value, file, img)` is called for each photo that loads. Selects the first photo
- * unless the player already picked something.
+ * Add the library photos to a choiceField right after `anchor` (the upload button).
+ * `onPhoto(value, photo, imgPromise)` is called for each photo; images load in parallel.
+ * Selects the first photo unless the player already picked something.
  */
 export function addPhotoChoices(field, anchor, lang, onPhoto) {
   let touched = false;
   field.group.addEventListener('click', () => { touched = true; });
-  loadManifest().then(async (photos) => {
+  loadLibrary().then((photos) => {
     let after = anchor;
-    for (const photo of photos) {
-      let img;
-      try {
-        img = await loadImage(`${PHOTO_DIR}/${encodeURIComponent(photo.file)}`);
-      } catch {
-        continue;
-      }
-      const value = `photo:${photo.file}`;
-      onPhoto(value, photo.file, img);
-      const title = typeof photo.title === 'object' && photo.title ? photo.title[lang] || photo.title.en : photo.title;
+    photos.forEach((photo, i) => {
+      const value = `photo:${photo.id}`;
+      const placeholder = el('span', { class: 'thumb upload-thumb', text: '⏳' });
       const b = el('button', { type: 'button', class: 'choice choice-preview', role: 'radio', onclick: () => field.set(value) },
-        thumb(img), el('span', { text: title || photo.file }));
+        placeholder, el('span', { text: photoTitle(photo, lang) }));
       b.dataset.value = value;
       after.after(b);
-      if (!touched && after === anchor) field.set(value);
       after = b;
-    }
+      const imgPromise = loadImage(photo.url);
+      onPhoto(value, photo, imgPromise);
+      imgPromise.then((img) => placeholder.replaceWith(thumb(img)), () => b.remove());
+      if (i === 0 && !touched) field.set(value);
+    });
   });
 }

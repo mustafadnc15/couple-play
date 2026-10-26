@@ -1,7 +1,7 @@
 import { el, choiceField } from '../lib/ui.js';
 import { DragBoard, roundRect } from '../lib/dragboard.js';
 import { renderArt, ART_IDS } from '../lib/art.js';
-import { photoToDataUrl, loadImage, aspectOf, thumb, addPhotoChoices, PHOTO_DIR } from '../lib/photo.js';
+import { photoToDataUrl, loadImage, aspectOf, thumb, addPhotoChoices } from '../lib/photo.js';
 
 const PIECE_COUNTS = [12, 24, 48, 108, 150, 192];
 const SHADOW = 6; // extra bitmap margin (world units) for the baked-in drop shadow
@@ -51,7 +51,7 @@ function piecePath(state, r, c, cw, ch) {
 
 async function loadPicture(image, board) {
   if (image.kind === 'custom') return loadImage(image.data);
-  if (image.kind === 'photo') return loadImage(`${PHOTO_DIR}/${encodeURIComponent(image.file)}`);
+  if (image.kind === 'photo') return loadImage(image.url);
   // Built-in pictures are drawn in code, so render them sharp at twice the board size.
   return renderArt(image.id, Math.round(board.w * 2), Math.round(board.h * 2));
 }
@@ -83,14 +83,14 @@ export default {
       uploadBtn.replaceChild(thumb(img), uploadBtn.firstChild);
       image.set('custom');
     });
-    addPhotoChoices(image, uploadBtn, lang, (value, file, img) => photos.set(value, { file, img }));
+    addPhotoChoices(image, uploadBtn, lang, (value, photo, img) => photos.set(value, { id: photo.id, img }));
     container.append(image.node, pieces.node, fileInput);
 
-    return () => {
+    return async () => {
       const choice = image.get();
       let picture;
       if (choice === 'custom' && custom) picture = { kind: 'custom', data: custom.data, aspect: aspectOf(custom.img) };
-      else if (photos.has(choice)) picture = { kind: 'photo', file: photos.get(choice).file, aspect: aspectOf(photos.get(choice).img) };
+      else if (photos.has(choice)) picture = { kind: 'photo', id: photos.get(choice).id, aspect: aspectOf(await photos.get(choice).img) };
       // Without an uploaded photo the custom choice falls back to the first built-in picture.
       else picture = { kind: 'builtin', id: ART_IDS.includes(choice) ? choice : ART_IDS[0] };
       return { pieces: Number(pieces.get()), image: picture };

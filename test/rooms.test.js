@@ -14,7 +14,7 @@ function emit(socket, event, payload) {
 }
 
 test('two partners share a room and play bluetooth', async (t) => {
-  const { httpServer, io } = createServer();
+  const { httpServer, io } = createServer({ dataDir: require('fs').mkdtempSync(require('path').join(require('os').tmpdir(), 'cp-')) });
   await new Promise((r) => httpServer.listen(0, r));
   const url = `http://localhost:${httpServer.address().port}`;
   const a = connect(url, { transports: ['websocket'] });

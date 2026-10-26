@@ -135,7 +135,7 @@ export default {
     });
 
     // Bundled photos (public/img/photos) come right after the upload button.
-    addPhotoChoices(image, uploadBtn, lang, (value, _file, img) => sources.set(value, () => img));
+    addPhotoChoices(image, uploadBtn, lang, (value, _photo, img) => sources.set(value, () => img));
 
     const detail = choiceField(t('opt.difficulty'), [
       { value: 'easy', label: t('opt.easy') },
@@ -147,7 +147,7 @@ export default {
     return async () => {
       let choice = image.get();
       if (choice === 'custom' && !custom) choice = ART_IDS[0];
-      const source = choice === 'custom' ? custom : sources.get(choice)();
+      const source = choice === 'custom' ? custom : await sources.get(choice)();
       // Let the "preparing" state paint before the (blocking) conversion runs.
       await new Promise((r) => setTimeout(r, 30));
       return { template: buildTemplate(source, detail.get()), detail: detail.get() };

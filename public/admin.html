@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>CouplePlay · Fotoğraf Kütüphanesi</title>
+  <meta name="theme-color" content="#ff4f81">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💞</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body data-view="admin">
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-icon">💞</span><span>CouplePlay</span></a>
+    <span class="chip" data-i18n="admin.title"></span>
+    <div class="lang-switch" role="group" aria-label="Language">
+      <button type="button" data-lang="tr">TR</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <main class="admin">
+    <section class="card" id="disabled" hidden>
+      <h2 data-i18n="admin.disabledTitle"></h2>
+      <p class="muted" data-i18n="admin.disabledText"></p>
+    </section>
+
+    <form class="card admin-login" id="login" hidden>
+      <h2 data-i18n="admin.title"></h2>
+      <p class="muted" data-i18n="admin.loginText"></p>
+      <label class="field">
+        <span data-i18n="admin.password"></span>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </label>
+      <button type="submit" class="btn btn-primary" data-i18n="admin.login"></button>
+      <p class="form-error" id="login-error" role="alert"></p>
+    </form>
+
+    <div id="panel" hidden>
+      <section class="card">
+        <div class="admin-head">
+          <h2 data-i18n="admin.uploadTitle"></h2>
+          <button type="button" class="btn btn-ghost btn-sm" id="logout" data-i18n="admin.logout"></button>
+        </div>
+        <p class="muted" data-i18n="admin.uploadText"></p>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="files" accept="image/jpeg,image/png,image/webp" multiple hidden>
+          <span class="dropzone-icon">📷</span>
+          <span data-i18n="admin.drop"></span>
+        </label>
+        <div class="queue" id="queue"></div>
+        <div class="admin-actions" id="queue-actions" hidden>
+          <button type="button" class="btn btn-ghost" id="clear-queue" data-i18n="admin.clearQueue"></button>
+          <button type="button" class="btn btn-primary" id="upload-all"></button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 data-i18n="admin.libraryTitle"></h2>
+        <p class="muted" data-i18n="admin.libraryText"></p>
+        <div class="library" id="library"></div>
+      </section>
+    </div>
+  </main>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

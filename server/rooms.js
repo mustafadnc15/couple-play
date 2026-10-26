@@ -26,8 +26,9 @@ function cleanCode(code) {
 }
 
 class RoomManager {
-  constructor(io) {
+  constructor(io, { photos } = {}) {
     this.io = io;
+    this.photos = photos;
     this.rooms = new Map();
     this.sweepTimer = setInterval(() => this.sweep(), 10 * 60 * 1000);
     this.sweepTimer.unref();
@@ -198,7 +199,7 @@ class RoomManager {
       const mod = activities.get(payload && payload.id);
       if (!mod) return;
       try {
-        const state = mod.create((payload && payload.options) || {}, { players: this.playerPids(room), pid: player.pid });
+        const state = mod.create((payload && payload.options) || {}, { players: this.playerPids(room), pid: player.pid, photos: this.photos });
         room.activity = { id: mod.id, gen: (room.gen = (room.gen || 0) + 1), state };
       } catch (err) {
         console.error('activity create failed', err);

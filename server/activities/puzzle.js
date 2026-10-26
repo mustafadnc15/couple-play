@@ -1,7 +1,5 @@
 'use strict';
 
-const fs = require('fs');
-const path = require('path');
 const { clamp, pick, shuffle } = require('./util');
 const { dragActions, release } = require('./drag');
 
@@ -9,26 +7,15 @@ const PIECE_COUNTS = [12, 24, 48, 108, 150, 192];
 const CELL = 64; // piece height in world units; the world grows with the piece count
 const BUILTIN_IMAGES = ['sunset', 'night', 'garden'];
 const MAX_IMAGE_CHARS = 3.5e6;
-const PHOTO_MANIFEST = path.join(__dirname, '..', '..', 'public', 'img', 'photos', 'index.json');
-
-function bundledPhotos() {
-  try {
-    return JSON.parse(fs.readFileSync(PHOTO_MANIFEST, 'utf8')).map((p) => p.file);
-  } catch {
-    return [];
-  }
-}
-
-/** { kind: 'builtin', id } | { kind: 'photo', file, aspect } | { kind: 'custom', data, aspect } */
-function parseImage(img) {
+/** { kind: 'builtin', id } | { kind: 'photo', id, url, aspect } (from the photo library) | { kind: 'custom', data, aspect } */
+function parseImage(img, photos) {
   const aspect = clamp(img && img.aspect, 0.5, 2);
   if (img && img.kind === 'custom' && typeof img.data === 'string'
     && img.data.length < MAX_IMAGE_CHARS && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(img.data)) {
     return { kind: 'custom', data: img.data, aspect };
   }
-  if (img && img.kind === 'photo' && bundledPhotos().includes(img.file)) {
-    return { kind: 'photo', file: img.file, aspect };
-  }
+  const photo = img && img.kind === 'photo' && photos && typeof img.id === 'string' && photos.get(img.id);
+  if (photo) return { kind: 'photo', id: photo.id, url: photo.url, aspect };
   return { kind: 'builtin', id: pick(BUILTIN_IMAGES, img && img.id, BUILTIN_IMAGES[0]), aspect: 4 / 3 };
 }
 
@@ -105,8 +92,8 @@ function randomEdges(rows, cols) {
   return Array.from({ length: rows }, () => Array.from({ length: cols }, () => (Math.random() < 0.5 ? 1 : -1)));
 }
 
-function create(options) {
-  const image = parseImage(options.image);
+function create(options, info = {}) {
+  const image = parseImage(options.image, info.photos);
   const count = pick(PIECE_COUNTS, Number(options.pieces), 24);
   const { rows, cols } = gridFor(count, image.aspect);
   const geo = layout(rows, cols, image.aspect);
