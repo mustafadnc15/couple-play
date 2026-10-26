@@ -45,13 +45,14 @@ Depoda hazır bir `render.yaml` var (Render Blueprint).
 4. **Apply** deyin. Birkaç dakika sonra site `https://couple-play-xxxx.onrender.com` gibi bir adreste açılır.
    Bundan sonra o dala her `git push` yaptığınızda site kendiliğinden güncellenir.
 
-Blueprint, yüklenen fotoğrafların kaybolmaması için 1 GB'lık kalıcı bir disk (`/var/data`) ekler. Kalıcı disk
-yalnızca ücretli planlarda (Starter) var. Sadece denemek isterseniz `render.yaml`'da `plan: free` yapıp `disk`
-bölümünü silebilirsiniz; o zaman:
-- yüklenen fotoğraflar her yeniden başlatmada/deploy'da silinir,
-- site 15 dakika kullanılmayınca uyur, ilk açılış yarım dakika kadar sürebilir ve açık odalar kapanır.
+Blueprint **ücretsiz plan** için ayarlı. Ücretsiz planın sınırları:
+- Kalıcı disk yoktur: `/admin` ile yüklenen fotoğraflar sunucu her yeniden başladığında ya da yeni bir sürüm
+  yayınlandığında silinir. Hep kalmasını istediğiniz fotoğrafları `public/img/photos/` klasörüne koyup
+  `index.json`'a ekleyerek depoya gönderin; bunlar silinmez.
+- Site ~15 dakika ziyaretçi olmayınca uyur; ilk açılış yarım dakika kadar sürebilir ve açık odalar kapanır.
 
-Güncel fiyatlar için Render'ın fiyat sayfasına bakın.
+Yüklemelerin kalıcı olmasını isterseniz ücretli plana geçip `render.yaml`'daki açıklamada yazan disk ayarını
+ekleyin. Güncel fiyatlar için Render'ın fiyat sayfasına bakın.
 
 #### Docker ile (Railway, Fly.io, kendi sunucunuz…)
 
@@ -145,8 +146,9 @@ English; you can see your partner's cursor and send floating emoji reactions.
 paint-by-number preview and TR/EN titles). They show up automatically in the Jigsaw and Paint pickers for every room.
 Uploads are stored in `DATA_DIR` (default `./data`); on hosts with ephemeral disks, mount a persistent volume there.
 
-**Deploy:** on Render, use *New → Blueprint* with this repo (`render.yaml` sets up the service, a 1 GB disk for
-uploads and asks for `ADMIN_PASSWORD`). Anywhere else, use the `Dockerfile` and mount a volume at `/data`.
+**Deploy:** on Render, use *New → Blueprint* with this repo (`render.yaml` sets up a free-plan service and asks for
+`ADMIN_PASSWORD`; the free plan has no persistent disk, so `/admin` uploads are lost on restart, see the comments in
+`render.yaml` to add a disk on a paid plan). Anywhere else, use the `Dockerfile` and mount a volume at `/data`.
 Run a single instance: rooms live in memory.
 
 **Adding an activity:** see "Yeni aktivite eklemek" above: one server module, one client module and two i18n strings.

@@ -1,23 +1,23 @@
-# Render Blueprint: Dashboard → New → Blueprint → pick this repository.
+# Render Blueprint: Dashboard → New → Blueprint → pick this repository and the `main` branch.
 # Render asks for ADMIN_PASSWORD when the Blueprint is created.
+#
+# Free plan: no persistent disk, so photos uploaded via /admin are lost whenever the service restarts
+# or redeploys, and the service sleeps after ~15 minutes without visitors (open rooms close).
+# Photos that should always be there can be committed to public/img/photos instead (see README).
+# To keep uploads, switch to a paid plan and add:
+#   plan: starter
+#   disk: { name: photos, mountPath: /var/data, sizeGB: 1 }
+#   envVars: DATA_DIR=/var/data
 services:
   - type: web
     name: couple-play
     runtime: node
-    # Persistent disks need a paid instance; on the free plan uploaded photos are lost on every
-    # restart/deploy and the app sleeps when idle (see README).
-    plan: starter
+    plan: free
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: "22"
-      - key: DATA_DIR
-        value: /var/data
       - key: ADMIN_PASSWORD
         sync: false
-    disk:
-      name: photos
-      mountPath: /var/data
-      sizeGB: 1
