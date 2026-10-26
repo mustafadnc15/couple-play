@@ -210,8 +210,57 @@ export default {
         if (confirm(api.t('paint.clearConfirm'))) api.send('clear', {});
       },
     });
+    const downloadBtn = el('button', {
+      type: 'button',
+      class: 'btn btn-sm btn-ghost',
+      text: `⬇️ ${api.t('paint.download')}`,
+      onclick: () => downloadPainting(),
+    });
     const newBtn = el('button', { type: 'button', class: 'btn btn-sm btn-secondary', text: api.t('drag.new'), onclick: api.newGame });
-    api.tools.append(progress, clearBtn, newBtn);
+    api.tools.append(progress, downloadBtn, clearBtn, newBtn);
+
+    /** Save the shared painting as a PNG: the paint, soft outlines (no numbers) and a little signature strip. */
+    function downloadPainting() {
+      if (!info) return;
+      const w = paintCanvas.width;
+      const h = paintCanvas.height;
+      const footer = 64;
+      const out = document.createElement('canvas');
+      out.width = w;
+      out.height = h + footer;
+      const g = out.getContext('2d');
+      g.fillStyle = '#fff';
+      g.fillRect(0, 0, w, h + footer);
+      g.drawImage(paintCanvas, 0, 0);
+      g.globalAlpha = 0.35;
+      g.imageSmoothingEnabled = true;
+      g.drawImage(info.outline, 0, 0, w, h);
+      g.globalAlpha = 1;
+
+      const names = [api.player(api.me), api.partner()].filter(Boolean).map((p) => p.name).join(' & ');
+      const date = new Date().toLocaleDateString(api.lang === 'tr' ? 'tr-TR' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+      g.fillStyle = '#fff0f5';
+      g.fillRect(0, h, w, footer);
+      g.fillStyle = '#2b2140';
+      g.textBaseline = 'middle';
+      g.font = '800 26px Nunito, sans-serif';
+      g.textAlign = 'left';
+      g.fillText(`💞 ${names}`, 24, h + footer / 2);
+      g.font = '700 20px Nunito, sans-serif';
+      g.fillStyle = '#7a6d8f';
+      g.textAlign = 'right';
+      g.fillText(`${date} · CouplePlay`, w - 24, h + footer / 2);
+
+      out.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = el('a', { href: url, download: `couple-play-${new Date().toISOString().slice(0, 10)}.png` });
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }, 'image/png');
+    }
 
     function setTool(next) {
       tool = next;
@@ -491,6 +540,7 @@ export default {
         } else if (type === 'complete') {
           state.completed = true;
           api.celebrate(api.t('paint.done'));
+          downloadBtn.classList.add('attention'); // nudge: keep the finished painting
         }
       },
       onCursor(pid, x, y) {

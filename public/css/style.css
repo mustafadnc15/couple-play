@@ -55,6 +55,7 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 }
 .btn:active { transform: scale(0.97); }
 .btn:disabled { opacity: 0.6; cursor: wait; }
+.btn.attention { border-color: var(--pink); color: #c2185b; animation: pulse 1.6s ease-in-out 4; }
 .btn-primary {
   color: #fff;
   background: linear-gradient(135deg, var(--pink), #ff7a59);
